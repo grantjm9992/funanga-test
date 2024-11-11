@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Services\Password\PasswordHashService;
 use App\Services\Password\PasswordHashServiceInterface;
+use App\Services\User\LoginUserService;
+use App\Services\User\LoginUserServiceInterface;
 use App\Services\User\RegisterUserService;
 use App\Services\User\RegisterUserServiceInterface;
 use Illuminate\Support\ServiceProvider;
@@ -15,6 +17,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(
+            abstract: LoginUserServiceInterface::class,
+            concrete: LoginUserService::class,
+        );
         $this->app->singleton(
             abstract: RegisterUserServiceInterface::class,
             concrete: RegisterUserService::class,
@@ -30,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
         return [
             RegisterUserServiceInterface::class,
             PasswordHashServiceInterface::class,
+            LoginUserServiceInterface::class,
         ];
     }
 }

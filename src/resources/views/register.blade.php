@@ -46,35 +46,54 @@
 <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
-        // Handle form submission
+        // Handles form submission
         $('#loginForm').on('submit', function(e) {
             e.preventDefault();
             var email = $('#email').val();
             var password = $('#password').val();
             var rememberMe = $('#rememberMe').prop('checked');
 
+            // Set data accordingly
             var data = {
                 email: email,
                 password: password,
                 remember_me: rememberMe
             };
 
+            // Send data via AJAX - relative route since in the same laravel project
             $.ajax({
                 url: '/api/register',
                 method: 'POST',
                 data: data,
                 success: function(response) {
-                    if (response.status === 'ok') {
-                        alert('Hello, ' + response.username + '. You are logged in!');
-                    } else {
-                        alert('Error: ' + response.message);
-                    }
+                    // Use sweet alerts because they're more aesthetically pleasing
+                    swal.fire({
+                        title: 'Success',
+                        text: `Hello, ${response.user.email} You are registered!`,
+                        icon: 'success',
+                    }).then(() => {
+                        // After promise, redirect to login
+                        window.location.href = '/login';
+                    });
                 },
                 error: function(xhr, status, error) {
-                    if (status !== 500) {
-                        alert(xhr.responseJSON.message);
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        // Use the error message from the backend to show what went wrong
+                        swal.fire({
+                            title: 'Error',
+                            text: xhr.responseJSON.message,
+                            icon: 'error',
+                        });
+                    } else {
+                        // Unexpected error
+                        swal.fire({
+                            title: 'Error',
+                            text: 'Something has gone wrong. Please try again',
+                            icon: 'error',
+                        });
                     }
                 }
             });

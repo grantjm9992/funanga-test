@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Exceptions\CredentialsIncorrectException;
+use App\Http\Exceptions\UserAlreadyExistsException;
+use App\Services\User\LoginUserServiceInterface;
 use App\Services\User\RegisterUserServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,38 +13,37 @@ use Illuminate\Support\Facades\Auth;
 readonly class AuthController
 {
     public function __construct(
-        private RegisterUserServiceInterface $registerUserService
+        private RegisterUserServiceInterface $registerUserService,
+        private LoginUserServiceInterface $loginUserService,
     ) {
     }
 
+    /**
+     * @param Request $request - email and password both required
+     * @return JsonResponse
+     * @throws CredentialsIncorrectException when user provides incorrect password or email
+     */
     public function login(Request $request): JsonResponse
     {
         $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
-        $credentials = $request->only('email', 'password');
 
-        $token = Auth::attempt($credentials);
-        if (!$token) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User or email incorrect',
-            ], 401);
-        }
+        $response = $this->loginUserService->__invoke(
+            email: $request->get('email'),
+            password: $request->get('password'),
+        );
 
-        $user = Auth::user()->toArray();
-
-        return response()->json([
-            'status' => 'success',
-            'user' => $user,
-            'authorisation' => [
-                'token' => $token,
-                'type' => 'bearer',
-            ],
-        ]);
+        return response()->json($response);
     }
 
+    /**
+     * @param Request $request - email and password both required
+     * @throws UserAlreadyExistsException when user email is already taken
+     * @return JsonResponse
+     * Requires email and password to be passed via request body to register bew
+     */
     public function register(Request $request): JsonResponse
     {
         $request->validate([
